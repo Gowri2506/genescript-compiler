@@ -1,0 +1,4 @@
+SEQUENCE reference = "ATGCGATCGATCG";
+SEQUENCE sample = "ATGCAATCGATCG";
+
+COMPARE reference WITH sample;

@@ -1,0 +1,3 @@
+SEQUENCE dna = "ATGCGATCGATCG";
+
+PRINT LENGTH(dna);b
