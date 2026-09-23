@@ -29,6 +29,7 @@ ASTNode *gs_ast_root = NULL;
     ASTNode *node;
     ASTList *list;
     char *str;
+    int flag;
 }
 
 %token <str> IDENTIFIER STRING
@@ -38,6 +39,7 @@ ASTNode *gs_ast_root = NULL;
 
 %type <node> statement expr
 %type <list> stmt_list
+%type <flag> terminator
 
 %start program
 
@@ -53,27 +55,33 @@ stmt_list
     ;
 
 statement
-    : SEQUENCE IDENTIFIER ASSIGN STRING SEMICOLON {
+    : SEQUENCE IDENTIFIER ASSIGN STRING terminator {
+          /* ';b' is accepted here to match GRAMMAR.md and the
+             recursive-descent front end; it has no effect because a
+             declaration prints nothing. */
           $$ = ast_new_sequence_decl($2, $4, yylineno);
           free($2); free($4);
       }
-    | IDENTIFIER ASSIGN expr SEMICOLON {
+    | IDENTIFIER ASSIGN expr terminator {
+          /* same as above: ';b' accepted, no effect on an assignment */
           $$ = ast_new_assignment($1, $3, yylineno);
           free($1);
       }
-    | PRINT expr SEMICOLON      { $$ = ast_new_print($2, 0, yylineno); }
-    | PRINT expr SEMICOLON_BIN  { $$ = ast_new_print($2, 1, yylineno); }
+    | PRINT expr terminator     { $$ = ast_new_print($2, $3, yylineno); }
     | COMPARE IDENTIFIER WITH IDENTIFIER SEMICOLON {
           $$ = ast_new_compare($2, $4, yylineno);
           free($2); free($4);
       }
-    | expr SEMICOLON {
+    | expr terminator {
           $$ = ast_new_expr_stmt($1, yylineno);
+          $$->print_binary = $2;
       }
-    | expr SEMICOLON_BIN {
-          $$ = ast_new_expr_stmt($1, yylineno);
-          $$->print_binary = 1;
-      }
+    ;
+
+/* terminator -> ';' | ';b'   (value: 1 if the binary-output form was used) */
+terminator
+    : SEMICOLON      { $$ = 0; }
+    | SEMICOLON_BIN  { $$ = 1; }
     ;
 
 expr

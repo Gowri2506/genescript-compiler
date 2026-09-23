@@ -1,0 +1,1 @@
+PRINT LENGTH(nothere);

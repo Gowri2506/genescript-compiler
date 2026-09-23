@@ -50,9 +50,8 @@ clean:
 	rm -f examples/*.ll examples/*.bc examples/*.s examples/*.o examples/*.exe
 	rm -f *.ll *.bc *.s *.exe
 
-# Run every example through both front ends.
+# Run every example + test case through BOTH front ends and compare
+# against the saved .expected output; check that tests/errors/ programs
+# are rejected. See tests/run_tests.sh.
 test: all
-	@for f in examples/*.gs; do \
-		echo "=== $$f (bison) ==="; ./gsc $$f --frontend=bison; echo; \
-		echo "=== $$f (recursive-descent) ==="; ./gsc $$f --frontend=rd --no-run -o /tmp/rdcheck > /dev/null; echo "(rd front end: parsed + codegen OK)"; echo; \
-	done
+	@tests/run_tests.sh
