@@ -8,6 +8,9 @@
 # 2. Every program in tests/errors/ must be REJECTED (non-zero exit)
 #    by both front ends, with an error message.
 #
+# A test can pass extra gsc options by putting them in <name>.flags
+# (e.g. "--show-opt --dump-tac"), so the dump/optimizer output is tested too.
+#
 # To (re)generate an expected file after deliberately changing output:
 #   tests/run_tests.sh --update
 
@@ -24,7 +27,10 @@ pass=0; fail=0
 
 # Compile+run one file in the scratch dir, output without gsc's own [gsc] log lines.
 run_gsc() {
-    (cd "$WORK" && "$GSC" "$1" --frontend="$2" 2>&1) | grep -v '^\[gsc\]'
+    local flags=""
+    [ -f "${1%.gs}.flags" ] && flags="$(cat "${1%.gs}.flags")"
+    # shellcheck disable=SC2086
+    (cd "$WORK" && "$GSC" "$1" --frontend="$2" $flags 2>&1) | grep -v '^\[gsc\]'
     return "${PIPESTATUS[0]}"
 }
 

@@ -1,0 +1,12 @@
+== Optimization report ==
+  line 11  [cse] LENGTH(a)  computed 2 times -> computed once into $cse1
+  line 12  [cse] LENGTH(dna)  reuses value already in '$cse1'
+  summary: 0 domain rewrite(s), 1 reused value(s), 1 temporary(ies)
+
+
+GC Content: 66.67%
+GC Content: 53.85%
+Length: 13
+Length: 13
+Reverse:
+GGGGCCCCAAAA

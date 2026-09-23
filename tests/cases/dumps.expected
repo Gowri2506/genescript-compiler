@@ -1,0 +1,54 @@
+== Tokens ==
+  LINE  TOKEN                LEXEME
+  1     SEQUENCE             SEQUENCE
+  1     IDENTIFIER           dna
+  1     ASSIGN               =
+  1     STRING               "ATGCGATCG"
+  1     SEMICOLON            ;
+  2     IDENTIFIER           len
+  2     ASSIGN               =
+  2     LENGTH               LENGTH
+  2     LPAREN               (
+  2     IDENTIFIER           dna
+  2     RPAREN               )
+  2     SEMICOLON            ;
+  3     PRINT                PRINT
+  3     IDENTIFIER           len
+  3     SEMICOLON_BIN        ;b
+  4     FIND_MOTIF           FIND_MOTIF
+  4     LPAREN               (
+  4     IDENTIFIER           dna
+  4     COMMA                ,
+  4     STRING               "ATG"
+  4     RPAREN               )
+  4     SEMICOLON            ;
+
+== AST ==
+Program
+├── SequenceDecl dna = "ATGCGATCG"   (line 1)
+├── Assignment len   (line 2)
+│   └── FuncCall LENGTH
+│       └── Identifier dna
+├── Print (binary)   (line 3)
+│   └── Identifier len
+└── ExprStmt   (line 4)
+    └── FuncCall FIND_MOTIF
+        ├── Identifier dna
+        └── StringLiteral "ATG"
+
+== TAC ==
+  dna = LOAD_SEQ "ATGCGATCG"
+  len = LENGTH dna
+  PRINT_BIN len
+  FIND_MOTIF dna, "ATG"
+  HALT
+
+== Symbol table ==
+  NAME       TYPE      LENGTH  GC%      LINE  VALUE / SOURCE
+  dna        SEQUENCE  9       55.56    1     "ATGCGATCG"
+  len        INT       -       -        2     LENGTH(dna)
+
+
+Length: 1001 (binary)
+Motif:
+ATG -> position 1

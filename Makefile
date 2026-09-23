@@ -35,14 +35,20 @@ runtime.o: $(SRC)/runtime.c
 rdparser.o: $(SRC)/rdparser.c $(SRC)/ast.h $(SRC)/parser.tab.h
 	$(CC) -c $(SRC)/rdparser.c -o rdparser.o -I$(SRC) -std=c11 -D_GNU_SOURCE
 
+optimizer.o: $(SRC)/optimizer.c $(SRC)/optimizer.h $(SRC)/dump.h $(SRC)/ast.h
+	$(CC) -c $(SRC)/optimizer.c -o optimizer.o -I$(SRC) -std=c11 -D_GNU_SOURCE
+
+dump.o: $(SRC)/dump.c $(SRC)/dump.h $(SRC)/ast.h $(SRC)/parser.tab.h
+	$(CC) -c $(SRC)/dump.c -o dump.o -I$(SRC) -std=c11 -D_GNU_SOURCE
+
 codegen.o: $(SRC)/codegen.c $(SRC)/codegen.h $(SRC)/ast.h
 	$(CC) -c $(SRC)/codegen.c -o codegen.o -I$(SRC) $(CFLAGS)
 
-main.o: $(SRC)/main.c $(SRC)/ast.h $(SRC)/codegen.h
+main.o: $(SRC)/main.c $(SRC)/ast.h $(SRC)/codegen.h $(SRC)/optimizer.h $(SRC)/dump.h
 	$(CC) -c $(SRC)/main.c -o main.o -I$(SRC) $(CFLAGS)
 
 # ---- Link the compiler driver itself (this is "gsc", the GeneScript compiler) ----
-gsc: ast.o parser.tab.o lex.yy.o rdparser.o codegen.o main.o
+gsc: ast.o parser.tab.o lex.yy.o rdparser.o optimizer.o dump.o codegen.o main.o
 	$(CC) $^ -o gsc $(LDFLAGS) $(LIBS) $(SYSLIBS)
 
 clean:

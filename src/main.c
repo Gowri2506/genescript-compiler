@@ -3,6 +3,7 @@
  *
  * Pipeline:
  *   source.gs --[flex+bison OR hand-written recursive-descent]--> AST
+ *            --[optimizer.c: domain rewrites + CSE]--> optimized AST
  *            --[codegen.c, LLVM-C API]--> LLVM Module
  *            --[this file]--> .ll (text IR) + .bc (bitcode)
  *            --[llc, LLVM's backend]--> .s (assembly) + .o (object code)
@@ -13,9 +14,13 @@
  *
  * Usage:
  *   gsc <file.gs> [--frontend=bison|rd] [--emit-llvm] [--no-run] [-o NAME]
+ *                 [--no-opt] [--show-opt]
+ *                 [--dump-tokens] [--dump-ast] [--dump-tac] [--dump-symtab]
  */
 #include "ast.h"
 #include "codegen.h"
+#include "optimizer.h"
+#include "dump.h"
 
 #include <llvm-c/Core.h>
 #include <llvm-c/BitWriter.h>
@@ -67,7 +72,18 @@ static int exit_code_of(int status) {
 
 int main(int argc, char **argv) {
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <file.gs> [--frontend=bison|rd] [--emit-llvm] [--no-run] [-o NAME]\n", argv[0]);
+        fprintf(stderr,
+            "Usage: %s <file.gs> [options]\n"
+            "  --frontend=bison|rd  parser to use (default: bison)\n"
+            "  --no-opt, -O0        skip the optimizer\n"
+            "  --show-opt           print every optimization applied\n"
+            "  --dump-tokens        print the lexer's token stream\n"
+            "  --dump-ast           print the syntax tree\n"
+            "  --dump-tac           print three-address code before/after optimization\n"
+            "  --dump-symtab        print the symbol table\n"
+            "  --emit-llvm          print the generated LLVM IR\n"
+            "  --no-run             compile and link, but don't run\n"
+            "  -o NAME              name of the output executable\n", argv[0]);
         return 1;
     }
 
@@ -75,6 +91,8 @@ int main(int argc, char **argv) {
     const char *frontend = "bison";
     int emitLLVM = 0;
     int runAfter = 1;
+    int optimize = 1, showOpt = 0;
+    int dumpTokens = 0, dumpAst = 0, dumpTac = 0, dumpSymtab = 0;
     char outName[512] = "";
 
     for (int i = 1; i < argc; i++) {
@@ -82,6 +100,16 @@ int main(int argc, char **argv) {
         if (strncmp(a, "--frontend=", 11) == 0) frontend = a + 11;
         else if (strcmp(a, "--emit-llvm") == 0) emitLLVM = 1;
         else if (strcmp(a, "--no-run") == 0) runAfter = 0;
+        else if (strcmp(a, "--no-opt") == 0 || strcmp(a, "-O0") == 0) optimize = 0;
+        else if (strcmp(a, "--show-opt") == 0) showOpt = 1;
+        else if (strcmp(a, "--dump-tokens") == 0) dumpTokens = 1;
+        else if (strcmp(a, "--dump-ast") == 0) dumpAst = 1;
+        else if (strcmp(a, "--dump-tac") == 0) dumpTac = 1;
+        else if (strcmp(a, "--dump-symtab") == 0) dumpSymtab = 1;
+        else if (a[0] == '-' && strcmp(a, "-o") != 0) {
+            fprintf(stderr, "Unknown option '%s' (run gsc with no arguments for help)\n", a);
+            return 1;
+        }
         else if (strcmp(a, "-o") == 0 && i + 1 < argc) { strncpy(outName, argv[++i], sizeof(outName) - 1); }
         else if (a[0] != '-') inputFile = a;
     }
@@ -96,6 +124,8 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Error: could not open '%s'\n", inputFile);
         return 1;
     }
+
+    if (dumpTokens) dump_tokens(yyin, stdout); /* lexical analysis, on its own */
 
     ASTNode *root = NULL;
     if (strcmp(frontend, "bison") == 0) {
@@ -116,6 +146,25 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Compilation failed: no AST produced.\n");
         return 1;
     }
+
+    if (dumpAst) dump_ast(root, stdout);
+
+    /* ---- optimization (AST -> AST) ---- */
+    if (dumpTac) {
+        printf(optimize ? "== TAC (before optimization) ==\n" : "== TAC ==\n");
+        dump_tac(root, stdout);
+        printf("\n");
+    }
+    if (optimize) {
+        optimize_program(root, showOpt ? stdout : NULL);
+        if (dumpTac) {
+            printf("== TAC (after optimization) ==\n");
+            dump_tac(root, stdout);
+            printf("\n");
+        }
+    }
+    if (dumpSymtab) dump_symtab(root, stdout);
+    fflush(stdout);
 
     char base[512];
     strip_ext(inputFile, base, sizeof(base));
