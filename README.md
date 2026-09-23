@@ -234,5 +234,7 @@ ui/requirements.txt     Python packages for the UI
 tests/run_tests.sh      Test runner: both front ends vs. expected output
 tests/cases/*.gs        Extra programs that must compile and run correctly
                         (<name>.flags adds gsc options, e.g. --dump-tac)
+tests/run_tests.sh      Test runner: both front ends vs. expected output
+tests/cases/*.gs        Extra programs that must compile and run correctly
 tests/errors/*.gs       Programs that must be rejected with an error
 ```
