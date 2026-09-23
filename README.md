@@ -58,6 +58,24 @@ semantic error. Each run of `gsc` leaves behind `<name>.ll` (IR text), `<name>.b
 `<name>.exe` (linked binary) in the current directory — inspect any of
 them to see the real intermediate artifacts.
 
+## Web UI (Streamlit)
+
+A browser UI that shows every phase of a compile side by side: token
+table, AST, symbol table, TAC before/after optimization with the list of
+rewrites, LLVM IR, assembly, and the program's output. If compilation
+fails, the pipeline bar marks the phase that failed (lexer, parser, or
+semantic analysis) and shows the error.
+
+```bash
+make                                   # the UI runs the real ./gsc
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r ui/requirements.txt
+streamlit run ui/app.py                # then open http://localhost:8501
+```
+
+`ui/app.py` only runs `gsc` with its `--dump-*` flags and lays out the
+result -- it doesn't reimplement any part of the compiler.
+
 ## Seeing every phase
 
 ```bash
@@ -214,5 +232,12 @@ examples/*.gs           Sample programs (+ .expected output for each)
 tests/run_tests.sh      Test runner: both front ends vs. expected output
 tests/cases/*.gs        Extra programs that must compile and run correctly
                         (<name>.flags adds gsc options, e.g. --dump-tac)
+ui/app.py               Streamlit web UI (runs gsc, shows every phase)
+ui/requirements.txt     Python packages for the UI
+tests/run_tests.sh      Test runner: both front ends vs. expected output
+tests/cases/*.gs        Extra programs that must compile and run correctly
+                        (<name>.flags adds gsc options, e.g. --dump-tac)
+tests/run_tests.sh      Test runner: both front ends vs. expected output
+tests/cases/*.gs        Extra programs that must compile and run correctly
 tests/errors/*.gs       Programs that must be rejected with an error
 ```
