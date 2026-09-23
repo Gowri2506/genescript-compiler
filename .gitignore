@@ -16,3 +16,7 @@ src/lex.yy.c
 .idea/
 *.swp
 .DS_Store
+
+# Python (web UI)
+.venv/
+__pycache__/

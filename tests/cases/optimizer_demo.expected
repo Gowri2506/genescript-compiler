@@ -1,0 +1,65 @@
+== TAC (before optimization) ==
+  dna = LOAD_SEQ "ATGCGATCGATCG"
+  x = GC_CONTENT dna
+  y = GC_CONTENT dna
+  PRINT y
+  t1 = COMPLEMENT dna
+  t2 = REVERSE t1
+  PRINT t2
+  t3 = REVERSE_COMPLEMENT dna
+  t4 = LENGTH t3
+  PRINT t4
+  t5 = REVERSE dna
+  t6 = REVERSE t5
+  t7 = TRANSLATE t6
+  PRINT t7
+  t8 = TRANSLATE dna
+  PRINT t8
+  x = LENGTH dna
+  PRINT x
+  HALT
+
+== Optimization report ==
+  line 10  [domain] REVERSE(COMPLEMENT(dna))  ->  REVERSE_COMPLEMENT(dna)
+  line 13  [domain] LENGTH(REVERSE_COMPLEMENT(dna))  ->  LENGTH(dna)
+  line 16  [domain] REVERSE(REVERSE(dna))  ->  dna
+  line 6   [cse] GC_CONTENT(dna)  reuses value already in 'x'
+  line 13  [cse] LENGTH(dna)  computed 2 times -> computed once into $cse1
+  line 16  [cse] TRANSLATE(dna)  computed 2 times -> computed once into $cse2
+  line 20  [cse] TRANSLATE(dna)  reuses value already in '$cse2'
+  line 23  [cse] LENGTH(dna)  reuses value already in '$cse1'
+  summary: 3 domain rewrite(s), 3 reused value(s), 2 temporary(ies)
+
+== TAC (after optimization) ==
+  dna = LOAD_SEQ "ATGCGATCGATCG"
+  x = GC_CONTENT dna
+  y = x
+  PRINT y
+  t1 = REVERSE_COMPLEMENT dna
+  PRINT t1
+  $cse1 = LENGTH dna
+  PRINT $cse1
+  $cse2 = TRANSLATE dna
+  PRINT $cse2
+  PRINT $cse2
+  x = $cse1
+  PRINT x
+  HALT
+
+== Symbol table ==
+  NAME       TYPE      LENGTH  GC%      LINE  VALUE / SOURCE
+  dna        SEQUENCE  13      53.85    2     "ATGCGATCGATCG"
+  x          PERCENT   -       -        5     GC_CONTENT(dna)
+  y          PERCENT   -       -        6     x
+  $cse1      INT       -       -        13    LENGTH(dna)   (compiler temporary)
+  $cse2      PROTEIN   -       -        16    TRANSLATE(dna)   (compiler temporary)
+  x          INT       -       -        23    $cse1
+
+
+GC Content: 53.85%
+Reverse Complement:
+CGATCGATCGCAT
+Length: 13
+Protein: MRSI
+Protein: MRSI
+Length: 13
