@@ -14,6 +14,8 @@
 %option yylineno
 
 %{
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "ast.h"
 #include "parser.tab.h"
@@ -55,6 +57,9 @@ static char *copy_unquoted(const char *text, int len) {
 ";b"                    { return SEMICOLON_BIN; }
 ";"                     { return SEMICOLON; }
 
-.                       { fprintf(stderr, "Lex Error (line %d): unexpected character '%s'\n", yylineno, yytext); }
+.                       {
+                          fprintf(stderr, "Lex Error (line %d): unexpected character '%s'\n", yylineno, yytext);
+                          exit(1); /* a bad character is fatal -- don't compile a half-read program */
+                        }
 
 %%

@@ -1,0 +1,2 @@
+SEQUENCE dna = "ATGC";
+PRINT LENGTH(GC_CONTENT(dna));
